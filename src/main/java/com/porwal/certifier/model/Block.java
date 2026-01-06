@@ -11,19 +11,19 @@ public class Block {
     // Data Fields
     private String studentName;
     private String courseName;
-    private String organization; // NEW
-    private String instructor;   // NEW
+    private String organization; 
+    private String instructor;   
     
     private String issueDate;
     private long timeStamp;
     private int nonce = 0;
 
-    // Updated Constructor
+    // Constructor
     public Block(String studentName, String courseName, String organization, String instructor, String previousHash) {
         this.studentName = studentName;
         this.courseName = courseName;
-        this.organization = organization; // NEW
-        this.instructor = instructor;     // NEW
+        this.organization = organization;
+        this.instructor = instructor;
         this.previousHash = previousHash;
         this.timeStamp = new Date().getTime();
         this.issueDate = new Date().toString();
@@ -31,13 +31,11 @@ public class Block {
     }
 
     public String calculateHash() {
-        // Include new fields in hash calculation for security
         String dataToHash = previousHash + Long.toString(timeStamp) + Integer.toString(nonce) 
                 + studentName + courseName + organization + instructor;
         return applySha256(dataToHash);
     }
 
-    // Standard SHA-256 Helper
     public static String applySha256(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
