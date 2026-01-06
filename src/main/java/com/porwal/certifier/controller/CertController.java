@@ -33,3 +33,13 @@ public class CertController {
         return blockchainService.findBlock(hash);
     }
 }
+// inside CertController.java...
+
+@PostMapping("/issue")
+public Block issueCertificate(
+        @RequestParam String name, 
+        @RequestParam String course,
+        @RequestParam String org,
+        @RequestParam String instructor) {
+    return blockchainService.addCertificate(name, course, org, instructor);
+}
