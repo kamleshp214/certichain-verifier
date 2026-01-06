@@ -3,60 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CertiChain - Porwal</title>
+    <title>CertiChain | Secure Verification</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
-        body { font-family: 'Courier New', monospace; background: #f4f4f4; padding: 20px; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { color: #333; text-align: center; }
-        .form-group { margin-bottom: 15px; }
-        input { width: 96%; padding: 10px; margin-top: 5px; margin-bottom: 10px; border: 1px solid #ccc; }
-        button { width: 100%; padding: 10px; background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
-        button:hover { background: #218838; }
-        .cert-card { border: 1px solid #ddd; padding: 10px; margin-top: 10px; background: #fff; border-left: 5px solid #28a745; }
-        .hash { font-size: 10px; color: #666; word-break: break-all; }
+        :root { --primary: #2c3e50; --accent: #2980b9; --gold: #f1c40f; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eef2f3; margin: 0; padding: 20px; text-align: center; }
+        
+        /* Navigation */
+        .nav { margin-bottom: 20px; }
+        .nav button { padding: 10px 20px; font-size: 16px; border: none; cursor: pointer; background: #ddd; }
+        .nav button.active { background: var(--primary); color: white; }
+        
+        /* Container */
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-radius: 10px; }
+        .hidden { display: none; }
+        
+        /* Inputs */
+        input, select { padding: 10px; width: 80%; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
+        .btn-action { background: var(--accent); color: white; padding: 12px 30px; border: none; font-size: 16px; cursor: pointer; border-radius: 5px; margin-top: 10px; }
+        
+        /* Certificate Design */
+        .certificate-preview { 
+            border: 10px double #333; padding: 40px; margin-top: 20px; position: relative; color: #333;
+            background: url('https://www.transparenttextures.com/patterns/cream-paper.png'); 
+        }
+        .design-modern { border: 10px solid var(--accent); border-radius: 15px; }
+        .design-classic { border: 10px double var(--gold); }
+        
+        .cert-title { font-size: 30px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
+        .cert-body { margin: 20px 0; font-size: 18px; }
+        .cert-name { font-size: 32px; font-weight: bold; color: var(--accent); margin: 10px 0; border-bottom: 2px solid #ccc; display: inline-block; padding-bottom: 5px; }
+        
+        /* QR & Hash */
+        #qrcode { margin-top: 20px; display: flex; justify-content: center; }
+        .hash-id { font-size: 10px; color: #777; margin-top: 10px; font-family: monospace; }
+        
+        /* Scanner */
+        #reader { width: 100%; max-width: 500px; margin: auto; }
+        .valid { color: green; font-weight: bold; font-size: 20px; }
+        .invalid { color: red; font-weight: bold; font-size: 20px; }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>CertiChain Verifier</h1>
-    <h3>Issue New Certificate</h3>
-    <div class="form-group">
-        <input type="text" id="studentName" placeholder="Student Name">
-        <input type="text" id="courseName" placeholder="Course Name">
-        <button onclick="issueCert()">Issue Certificate</button>
-    </div>
-    <hr>
-    <h3>Live Blockchain Ledger</h3>
-    <button onclick="loadChain()">Refresh Ledger</button>
-    <div id="chainDisplay"></div>
+
+<div class="nav">
+    <button id="btnIssue" class="active" onclick="showTab('issue')">🏛 Issuer Mode</button>
+    <button id="btnVerify" onclick="showTab('verify')">🔍 Verifier Mode</button>
 </div>
+
+<div class="container">
+    
+    <div id="issueSection">
+        <h2>Generate Certificate</h2>
+        
+        <label>Select Design:</label>
+        <select id="designSelect" onchange="updatePreview()">
+            <option value="design-classic">Classic Gold</option>
+            <option value="design-modern">Modern Blue</option>
+        </select>
+        
+        <input type="text" id="studentName" placeholder="Student Name" onkeyup="updatePreview()">
+        <input type="text" id="courseName" placeholder="Course Name (e.g., Java Mastery)" onkeyup="updatePreview()">
+        
+        <br>
+        <button class="btn-action" onclick="issueCert()">Mint Certificate to Blockchain</button>
+
+        <div id="certCard" class="certificate-preview design-classic hidden">
+            <div class="cert-title">Certificate of Completion</div>
+            <p class="cert-body">This is to certify that</p>
+            <div class="cert-name" id="dispName">Student Name</div>
+            <p class="cert-body">has successfully completed the course</p>
+            <h3 id="dispCourse">Course Name</h3>
+            <p class="cert-body">Issued by CertiChain Authority</p>
+            
+            <div id="qrcode"></div>
+            <p class="hash-id" id="dispHash"></p>
+        </div>
+    </div>
+
+    <div id="verifySection" class="hidden">
+        <h2>Verify Authenticity</h2>
+        <p>Scan the QR code on any certificate to verify its blockchain signature.</p>
+        
+        <div id="reader"></div>
+        <div id="scanResult" style="margin-top:20px;"></div>
+    </div>
+
+</div>
+
 <script>
-    const API_URL = "/api"; 
+    const API_URL = "/api";
+    let html5QrcodeScanner;
+
+    function showTab(tab) {
+        document.getElementById('issueSection').classList.toggle('hidden', tab !== 'issue');
+        document.getElementById('verifySection').classList.toggle('hidden', tab !== 'verify');
+        document.getElementById('btnIssue').classList.toggle('active', tab === 'issue');
+        document.getElementById('btnVerify').classList.toggle('active', tab === 'verify');
+
+        if(tab === 'verify' && !html5QrcodeScanner) {
+            startScanner();
+        }
+    }
+
+    function updatePreview() {
+        document.getElementById('dispName').innerText = document.getElementById('studentName').value || "Student Name";
+        document.getElementById('dispCourse').innerText = document.getElementById('courseName').value || "Course Name";
+        
+        const design = document.getElementById('designSelect').value;
+        const card = document.getElementById('certCard');
+        card.className = `certificate-preview ${design}`;
+    }
+
     async function issueCert() {
         const name = document.getElementById('studentName').value;
         const course = document.getElementById('courseName').value;
-        if(!name || !course) return alert("Please fill details");
-        await fetch(API_URL + '/issue?name=' + name + '&course=' + course, { method: 'POST' });
-        alert("Certificate Added to Blockchain!");
-        loadChain();
-    }
-    async function loadChain() {
-        const response = await fetch(API_URL + '/verify');
-        const data = await response.json();
-        const container = document.getElementById('chainDisplay');
-        container.innerHTML = ""; 
-        data.forEach(block => {
-            const div = document.createElement('div');
-            div.className = 'cert-card';
-            div.innerHTML = '<p><strong>Owner:</strong> ' + block.studentName + '</p>' +
-                            '<p><strong>Course:</strong> ' + block.courseName + '</p>' +
-                            '<p><strong>Date:</strong> ' + block.issueDate + '</p>' +
-                            '<p class="hash"><strong>Hash:</strong> ' + block.hash + '</p>' +
-                            '<p class="hash"><strong>Prev Hash:</strong> ' + block.previousHash + '</p>';
-            container.appendChild(div);
+        
+        if(!name || !course) return alert("Enter details first!");
+
+        // API Call to Backend
+        const res = await fetch(`${API_URL}/issue?name=${name}&course=${course}`, { method: 'POST' });
+        const block = await res.json();
+
+        // Show Certificate
+        document.getElementById('certCard').classList.remove('hidden');
+        document.getElementById('dispHash').innerText = `Blockchain Hash: ${block.hash}`;
+
+        // Generate QR Code (Contains ONLY the hash)
+        document.getElementById('qrcode').innerHTML = "";
+        new QRCode(document.getElementById("qrcode"), {
+            text: block.hash, 
+            width: 100,
+            height: 100
         });
+        
+        alert("Certificate minted successfully!");
     }
-    loadChain();
+
+    function startScanner() {
+        html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess);
+    }
+
+    async function onScanSuccess(decodedText) {
+        // Stop scanning after success
+        html5QrcodeScanner.clear();
+        
+        document.getElementById('scanResult').innerHTML = "⌛ Checking Blockchain...";
+        
+        // Verify with Backend
+        const res = await fetch(`${API_URL}/verify/${decodedText}`);
+        const text = await res.text(); // returns empty string if null
+
+        if (text) {
+            const block = JSON.parse(text);
+            document.getElementById('scanResult').innerHTML = `
+                <div class="valid">✅ VALID CERTIFICATE</div>
+                <p>Issued To: ${block.studentName}</p>
+                <p>Course: ${block.courseName}</p>
+                <p>Date: ${block.issueDate}</p>
+            `;
+        } else {
+            document.getElementById('scanResult').innerHTML = `
+                <div class="invalid">❌ FAKE / NOT FOUND</div>
+                <p>This hash does not exist in our ledger.</p>
+            `;
+        }
+    }
 </script>
+
 </body>
 </html>
