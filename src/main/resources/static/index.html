@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CertiChain - Porwal</title>
+    <style>
+        body { font-family: 'Courier New', monospace; background: #f4f4f4; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        input { width: 96%; padding: 10px; margin-top: 5px; margin-bottom: 10px; border: 1px solid #ccc; }
+        button { width: 100%; padding: 10px; background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #218838; }
+        .cert-card { border: 1px solid #ddd; padding: 10px; margin-top: 10px; background: #fff; border-left: 5px solid #28a745; }
+        .hash { font-size: 10px; color: #666; word-break: break-all; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>CertiChain Verifier</h1>
+    <h3>Issue New Certificate</h3>
+    <div class="form-group">
+        <input type="text" id="studentName" placeholder="Student Name">
+        <input type="text" id="courseName" placeholder="Course Name">
+        <button onclick="issueCert()">Issue Certificate</button>
+    </div>
+    <hr>
+    <h3>Live Blockchain Ledger</h3>
+    <button onclick="loadChain()">Refresh Ledger</button>
+    <div id="chainDisplay"></div>
+</div>
+<script>
+    const API_URL = "/api"; 
+    async function issueCert() {
+        const name = document.getElementById('studentName').value;
+        const course = document.getElementById('courseName').value;
+        if(!name || !course) return alert("Please fill details");
+        await fetch(API_URL + '/issue?name=' + name + '&course=' + course, { method: 'POST' });
+        alert("Certificate Added to Blockchain!");
+        loadChain();
+    }
+    async function loadChain() {
+        const response = await fetch(API_URL + '/verify');
+        const data = await response.json();
+        const container = document.getElementById('chainDisplay');
+        container.innerHTML = ""; 
+        data.forEach(block => {
+            const div = document.createElement('div');
+            div.className = 'cert-card';
+            div.innerHTML = '<p><strong>Owner:</strong> ' + block.studentName + '</p>' +
+                            '<p><strong>Course:</strong> ' + block.courseName + '</p>' +
+                            '<p><strong>Date:</strong> ' + block.issueDate + '</p>' +
+                            '<p class="hash"><strong>Hash:</strong> ' + block.hash + '</p>' +
+                            '<p class="hash"><strong>Prev Hash:</strong> ' + block.previousHash + '</p>';
+            container.appendChild(div);
+        });
+    }
+    loadChain();
+</script>
+</body>
+</html>
