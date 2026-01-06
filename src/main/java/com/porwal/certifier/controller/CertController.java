@@ -8,38 +8,30 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "*") // Allow frontend to access this
+@CrossOrigin(origins = "*") 
 @RequestMapping("/api")
 public class CertController {
 
     @Autowired
     BlockchainService blockchainService;
 
-    // Issue a new certificate
+    // Updated Endpoint
     @PostMapping("/issue")
-    public Block issueCertificate(@RequestParam String name, @RequestParam String course) {
-        return blockchainService.addCertificate(name, course);
+    public Block issueCertificate(
+            @RequestParam String name, 
+            @RequestParam String course,
+            @RequestParam String org,
+            @RequestParam String instructor) {
+        return blockchainService.addCertificate(name, course, org, instructor);
     }
 
-    // Verify/View all certificates
     @GetMapping("/verify")
     public List<Block> getBlockchain() {
         return blockchainService.getChain();
     }
     
-    // NEW: Verify a specific single certificate by Hash (for QR code)
     @GetMapping("/verify/{hash}")
     public Block verifyCertificate(@PathVariable String hash) {
         return blockchainService.findBlock(hash);
     }
-}
-// inside CertController.java...
-
-@PostMapping("/issue")
-public Block issueCertificate(
-        @RequestParam String name, 
-        @RequestParam String course,
-        @RequestParam String org,
-        @RequestParam String instructor) {
-    return blockchainService.addCertificate(name, course, org, instructor);
 }
