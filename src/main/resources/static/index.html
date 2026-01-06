@@ -3,172 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CertiChain | Secure Verification</title>
+    <title>CertiChain | Blockchain Verification</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Orbitron:wght@500&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
-        :root { --primary: #2c3e50; --accent: #2980b9; --gold: #f1c40f; }
-        body { font-family: 'Segoe UI', sans-serif; background: #eef2f3; margin: 0; padding: 20px; text-align: center; }
+        :root { --primary: #2c3e50; --accent: #3498db; --glass: rgba(255, 255, 255, 0.95); }
         
-        /* Navigation */
-        .nav { margin-bottom: 20px; }
-        .nav button { padding: 10px 20px; font-size: 16px; border: none; cursor: pointer; background: #ddd; }
-        .nav button.active { background: var(--primary); color: white; }
-        
-        /* Container */
-        .container { max-width: 900px; margin: auto; background: white; padding: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-radius: 10px; }
-        .hidden { display: none; }
-        
-        /* Inputs */
-        input, select { padding: 10px; width: 80%; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
-        .btn-action { background: var(--accent); color: white; padding: 12px 30px; border: none; font-size: 16px; cursor: pointer; border-radius: 5px; margin-top: 10px; }
-        
-        /* Certificate Design */
-        .certificate-preview { 
-            border: 10px double #333; padding: 40px; margin-top: 20px; position: relative; color: #333;
-            background: url('https://www.transparenttextures.com/patterns/cream-paper.png'); 
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background: linear-gradient(135deg, #1e3c72, #2a5298); 
+            min-height: 100vh; 
+            margin: 0; padding: 20px; 
+            display: flex; justify-content: center; align-items: center;
         }
-        .design-modern { border: 10px solid var(--accent); border-radius: 15px; }
-        .design-classic { border: 10px double var(--gold); }
+
+        /* Card Container */
+        .container { 
+            width: 100%; max-width: 900px; 
+            background: var(--glass); 
+            border-radius: 20px; 
+            padding: 30px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Navigation Tabs */
+        .tabs { display: flex; gap: 10px; margin-bottom: 25px; justify-content: center; }
+        .tab-btn { 
+            padding: 12px 25px; border: none; border-radius: 50px; 
+            font-weight: bold; cursor: pointer; transition: 0.3s; 
+            background: #eee; color: #555; 
+        }
+        .tab-btn.active { background: var(--accent); color: white; transform: scale(1.05); }
+
+        /* Forms */
+        .input-group { margin: 15px 0; text-align: left; }
+        .input-group label { display: block; font-size: 12px; font-weight: bold; color: #666; margin-bottom: 5px; }
+        input, select { 
+            width: 100%; padding: 12px; border: 2px solid #ddd; 
+            border-radius: 8px; font-size: 16px; box-sizing: border-box; 
+        }
+        input:focus { border-color: var(--accent); outline: none; }
+
+        /* Buttons */
+        .btn-main { 
+            width: 100%; padding: 15px; background: #27ae60; color: white; 
+            border: none; border-radius: 8px; font-size: 18px; font-weight: bold; 
+            cursor: pointer; margin-top: 10px; transition: 0.2s;
+        }
+        .btn-main:hover { background: #219150; }
         
-        .cert-title { font-size: 30px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
-        .cert-body { margin: 20px 0; font-size: 18px; }
-        .cert-name { font-size: 32px; font-weight: bold; color: var(--accent); margin: 10px 0; border-bottom: 2px solid #ccc; display: inline-block; padding-bottom: 5px; }
+        .btn-secondary { background: #34495e; margin-top: 10px; padding: 10px 20px; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-download { background: #e74c3c; }
+
+        /* --- CERTIFICATE DESIGNS --- */
+        .cert-container { margin-top: 30px; overflow-x: auto; padding: 10px; }
         
-        /* QR & Hash */
-        #qrcode { margin-top: 20px; display: flex; justify-content: center; }
-        .hash-id { font-size: 10px; color: #777; margin-top: 10px; font-family: monospace; }
+        .certificate { 
+            width: 800px; height: 500px; margin: auto; padding: 40px; 
+            position: relative; box-sizing: border-box; text-align: center;
+            background: white; color: black; display: flex; flex-direction: column; justify-content: center;
+        }
+
+        /* 1. Classic Gold (Harvard Style) */
+        .design-classic {
+            border: 20px solid #f1c40f;
+            outline: 5px solid #bdc3c7;
+            background: radial-gradient(circle, #fffff0, #f0e68c);
+            font-family: 'Cinzel', serif;
+        }
+        .design-classic .c-title { font-size: 40px; color: #2c3e50; border-bottom: 2px solid #f1c40f; display: inline-block; padding-bottom: 10px; }
+        .design-classic .c-name { font-size: 48px; margin: 20px 0; color: #d35400; font-weight: bold; text-decoration: underline; }
         
+        /* 2. Cyberpunk (Tech Style) */
+        .design-cyber {
+            background: #000;
+            border: 4px solid #0ff;
+            box-shadow: 0 0 20px #0ff;
+            font-family: 'Orbitron', sans-serif;
+            color: #0ff;
+        }
+        .design-cyber .c-title { font-size: 36px; text-shadow: 0 0 10px #0ff; letter-spacing: 5px; }
+        .design-cyber .c-name { font-size: 50px; color: #f0f; text-shadow: 0 0 10px #f0f; margin: 20px 0; }
+        .design-cyber .c-body { color: #fff; }
+
+        /* QR Placement */
+        .qr-box { margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
+        .hash-text { font-size: 10px; margin-top: 5px; max-width: 80%; word-wrap: break-word; opacity: 0.7; }
+
         /* Scanner */
-        #reader { width: 100%; max-width: 500px; margin: auto; }
-        .valid { color: green; font-weight: bold; font-size: 20px; }
-        .invalid { color: red; font-weight: bold; font-size: 20px; }
+        #reader { width: 100%; max-width: 400px; margin: auto; border-radius: 10px; overflow: hidden; }
+        
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div class="nav">
-    <button id="btnIssue" class="active" onclick="showTab('issue')">🏛 Issuer Mode</button>
-    <button id="btnVerify" onclick="showTab('verify')">🔍 Verifier Mode</button>
-</div>
-
 <div class="container">
-    
-    <div id="issueSection">
-        <h2>Generate Certificate</h2>
-        
-        <label>Select Design:</label>
-        <select id="designSelect" onchange="updatePreview()">
-            <option value="design-classic">Classic Gold</option>
-            <option value="design-modern">Modern Blue</option>
-        </select>
-        
-        <input type="text" id="studentName" placeholder="Student Name" onkeyup="updatePreview()">
-        <input type="text" id="courseName" placeholder="Course Name (e.g., Java Mastery)" onkeyup="updatePreview()">
-        
-        <br>
-        <button class="btn-action" onclick="issueCert()">Mint Certificate to Blockchain</button>
+    <div class="tabs">
+        <button class="tab-btn active" id="t-issue" onclick="switchTab('issue')">Create Certificate</button>
+        <button class="tab-btn" id="t-verify" onclick="switchTab('verify')">Verify Certificate</button>
+    </div>
 
-        <div id="certCard" class="certificate-preview design-classic hidden">
-            <div class="cert-title">Certificate of Completion</div>
-            <p class="cert-body">This is to certify that</p>
-            <div class="cert-name" id="dispName">Student Name</div>
-            <p class="cert-body">has successfully completed the course</p>
-            <h3 id="dispCourse">Course Name</h3>
-            <p class="cert-body">Issued by CertiChain Authority</p>
+    <div id="view-issue">
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 1;">
+                <div class="input-group">
+                    <label>Candidate Name</label>
+                    <input type="text" id="inpName" placeholder="Ex: John Wick" onkeyup="updatePreview()">
+                </div>
+                <div class="input-group">
+                    <label>Course / Achievement</label>
+                    <input type="text" id="inpCourse" placeholder="Ex: Advanced Blockchain Security" onkeyup="updatePreview()">
+                </div>
+                <div class="input-group">
+                    <label>Select Theme</label>
+                    <select id="inpDesign" onchange="updatePreview()">
+                        <option value="design-classic">🏛 Harvard Gold</option>
+                        <option value="design-cyber">🦾 Cyberpunk 2077</option>
+                    </select>
+                </div>
+                <button class="btn-main" onclick="mintCertificate()">Mint to Blockchain</button>
+            </div>
+        </div>
+
+        <div id="cert-wrapper" class="cert-container hidden">
+            <div id="certificate" class="certificate design-classic">
+                <h1 class="c-title">Certificate of Completion</h1>
+                <p class="c-body">This certifies that</p>
+                <div class="c-name" id="p-name">Student Name</div>
+                <p class="c-body">Has successfully demonstrated mastery in</p>
+                <h2 id="p-course">Course Name</h2>
+                <p class="c-body">Verified on CertiChain Ledger</p>
+                
+                <div class="qr-box">
+                    <div id="qrcode"></div>
+                    <div class="hash-text" id="p-hash">BLOCK_HASH_WILL_APPEAR_HERE</div>
+                </div>
+            </div>
             
-            <div id="qrcode"></div>
-            <p class="hash-id" id="dispHash"></p>
+            <div style="margin-top: 20px;">
+                <button class="btn-secondary btn-download" onclick="downloadPDF()">⬇ Download PDF</button>
+                <button class="btn-secondary" onclick="shareLink()">🔗 Copy Share Link</button>
+            </div>
         </div>
     </div>
 
-    <div id="verifySection" class="hidden">
-        <h2>Verify Authenticity</h2>
-        <p>Scan the QR code on any certificate to verify its blockchain signature.</p>
+    <div id="view-verify" class="hidden">
+        <h2>Blockchain Explorer</h2>
+        <p>Scan a QR code or enter a Hash to verify authenticity.</p>
         
+        <div id="scan-status" style="margin-bottom: 10px; font-weight: bold;"></div>
         <div id="reader"></div>
-        <div id="scanResult" style="margin-top:20px;"></div>
+        
+        <div class="input-group" style="margin-top: 20px;">
+            <input type="text" id="manualHash" placeholder="Or paste Hash here...">
+            <button class="btn-secondary" onclick="manualVerify()">Verify Hash</button>
+        </div>
     </div>
-
 </div>
 
 <script>
     const API_URL = "/api";
-    let html5QrcodeScanner;
+    let currentBlock = null;
 
-    function showTab(tab) {
-        document.getElementById('issueSection').classList.toggle('hidden', tab !== 'issue');
-        document.getElementById('verifySection').classList.toggle('hidden', tab !== 'verify');
-        document.getElementById('btnIssue').classList.toggle('active', tab === 'issue');
-        document.getElementById('btnVerify').classList.toggle('active', tab === 'verify');
+    // 1. Tab Switching
+    function switchTab(tab) {
+        document.getElementById('view-issue').classList.toggle('hidden', tab !== 'issue');
+        document.getElementById('view-verify').classList.toggle('hidden', tab !== 'verify');
+        document.getElementById('t-issue').classList.toggle('active', tab === 'issue');
+        document.getElementById('t-verify').classList.toggle('active', tab === 'verify');
 
-        if(tab === 'verify' && !html5QrcodeScanner) {
-            startScanner();
+        if(tab === 'verify') startScanner();
+    }
+
+    // 2. Real-time Preview
+    function updatePreview() {
+        document.getElementById('p-name').innerText = document.getElementById('inpName').value || "Student Name";
+        document.getElementById('p-course').innerText = document.getElementById('inpCourse').value || "Course Name";
+        
+        const design = document.getElementById('inpDesign').value;
+        document.getElementById('certificate').className = `certificate ${design}`;
+    }
+
+    // 3. Mint Logic
+    async function mintCertificate() {
+        const name = document.getElementById('inpName').value;
+        const course = document.getElementById('inpCourse').value;
+        if(!name || !course) return alert("Please fill all details!");
+
+        const btn = document.querySelector('.btn-main');
+        btn.innerText = "Minting..."; btn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_URL}/issue?name=${name}&course=${course}`, { method: 'POST' });
+            currentBlock = await res.json();
+            
+            // Show result
+            document.getElementById('cert-wrapper').classList.remove('hidden');
+            document.getElementById('p-hash').innerText = currentBlock.hash;
+            
+            // Generate QR
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), {
+                text: currentBlock.hash,
+                width: 100, height: 100,
+                colorDark : "#000000", colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            alert("✅ Success! Block mined and saved to GitHub.");
+        } catch(e) {
+            alert("Error connecting to server");
+        }
+        btn.innerText = "Mint to Blockchain"; btn.disabled = false;
+    }
+
+    // 4. Download PDF
+    async function downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const cert = document.getElementById('certificate');
+        
+        // High quality capture
+        const canvas = await html2canvas(cert, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape, A4
+        const width = pdf.internal.pageSize.getWidth();
+        const height = pdf.internal.pageSize.getHeight();
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+        pdf.save(`${document.getElementById('inpName').value}_Cert.pdf`);
+    }
+
+    // 5. Shareable Link
+    function shareLink() {
+        if(!currentBlock) return;
+        const link = `${window.location.origin}?hash=${currentBlock.hash}`;
+        navigator.clipboard.writeText(link);
+        alert("Link copied! Send this to anyone to verify.");
+    }
+
+    // 6. Verification Logic
+    async function verifyHash(hash) {
+        document.getElementById('scan-status').innerText = "Searching Blockchain...";
+        const res = await fetch(`${API_URL}/verify/${hash}`);
+        const text = await res.text();
+        
+        if(text) {
+            const block = JSON.parse(text);
+            alert(`✅ VERIFIED!\n\nStudent: ${block.studentName}\nCourse: ${block.courseName}\nDate: ${block.issueDate}`);
+            document.getElementById('scan-status').innerHTML = "<span style='color:green'>Verified Successfully</span>";
+        } else {
+            alert("❌ INVALID CERTIFICATE\nHash not found in ledger.");
+            document.getElementById('scan-status').innerHTML = "<span style='color:red'>Invalid / Fake</span>";
         }
     }
 
-    function updatePreview() {
-        document.getElementById('dispName').innerText = document.getElementById('studentName').value || "Student Name";
-        document.getElementById('dispCourse').innerText = document.getElementById('courseName').value || "Course Name";
-        
-        const design = document.getElementById('designSelect').value;
-        const card = document.getElementById('certCard');
-        card.className = `certificate-preview ${design}`;
-    }
-
-    async function issueCert() {
-        const name = document.getElementById('studentName').value;
-        const course = document.getElementById('courseName').value;
-        
-        if(!name || !course) return alert("Enter details first!");
-
-        // API Call to Backend
-        const res = await fetch(`${API_URL}/issue?name=${name}&course=${course}`, { method: 'POST' });
-        const block = await res.json();
-
-        // Show Certificate
-        document.getElementById('certCard').classList.remove('hidden');
-        document.getElementById('dispHash').innerText = `Blockchain Hash: ${block.hash}`;
-
-        // Generate QR Code (Contains ONLY the hash)
-        document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), {
-            text: block.hash, 
-            width: 100,
-            height: 100
-        });
-        
-        alert("Certificate minted successfully!");
-    }
-
+    // Scanner
+    let scanner;
     function startScanner() {
-        html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-        html5QrcodeScanner.render(onScanSuccess);
+        if(scanner) return;
+        scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        scanner.render((decodedText) => {
+            scanner.clear();
+            verifyHash(decodedText);
+        });
     }
 
-    async function onScanSuccess(decodedText) {
-        // Stop scanning after success
-        html5QrcodeScanner.clear();
-        
-        document.getElementById('scanResult').innerHTML = "⌛ Checking Blockchain...";
-        
-        // Verify with Backend
-        const res = await fetch(`${API_URL}/verify/${decodedText}`);
-        const text = await res.text(); // returns empty string if null
+    function manualVerify() {
+        verifyHash(document.getElementById('manualHash').value);
+    }
 
-        if (text) {
-            const block = JSON.parse(text);
-            document.getElementById('scanResult').innerHTML = `
-                <div class="valid">✅ VALID CERTIFICATE</div>
-                <p>Issued To: ${block.studentName}</p>
-                <p>Course: ${block.courseName}</p>
-                <p>Date: ${block.issueDate}</p>
-            `;
-        } else {
-            document.getElementById('scanResult').innerHTML = `
-                <div class="invalid">❌ FAKE / NOT FOUND</div>
-                <p>This hash does not exist in our ledger.</p>
-            `;
+    // 7. Auto-Deep Link Check (Run on load)
+    window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const hash = urlParams.get('hash');
+        if(hash) {
+            switchTab('verify');
+            document.getElementById('manualHash').value = hash;
+            verifyHash(hash);
         }
     }
 </script>
