@@ -139,3 +139,24 @@ public class BlockchainService {
         return null;
     }
 }
+// inside BlockchainService.java...
+
+public Block addCertificate(String studentName, String courseName, String organization, String instructor) {
+    Block previousBlock = blockchain.get(blockchain.size() - 1);
+    // Pass new fields to Block constructor
+    Block newBlock = new Block(studentName, courseName, organization, instructor, previousBlock.hash);
+    blockchain.add(newBlock);
+    
+    saveChainToGitHub(); // Keep your GitHub sync logic
+    return newBlock;
+}
+
+// Update Genesis block in Constructor to avoid errors
+public BlockchainService() {
+    loadChainFromGitHub();
+    if (blockchain.isEmpty()) {
+        // Fix Genesis block arguments
+        blockchain.add(new Block("Genesis", "Init", "System", "Admin", "0")); 
+        saveChainToGitHub();
+    }
+}
